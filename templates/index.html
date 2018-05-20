@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>System compliance report</title>
+</head>
+<body>
+
+<article class="A4">
+    <div class="main-page-wrapper">
+        <h1 class="main-title">
+            System compliance report
+        </h1>
+    </div>
+</article>
+
+<article class="A4">
+    <h1 class="main-title">
+        System summary
+    </h1>
+    <h1 class="main-title">
+        Compliance summary
+    </h1>
+	<h3>
+        Дата и время генерации отчета: {{date_time_report}}
+    </h3>
+</article>
+
+
+<article class="A4">
+    <h1>
+        Проверка целевой системы
+    </h1>
+	{% for info in data %}
+	<article>
+        
+		<h3>Краткое описание проверки: {{info.descr_short}}</h3>
+        
+		<h4>id:{{info.id_}}</h4>
+
+        <p> требование: {{info.request}} </p>
+        <p> система: {{info.response}} </p>
+        <p> status: <span class="not-compliant">{{info.status}} </span></p>
+		<p> время проверки: {{info.datetime_from_run }} </p>
+		<p> длительность проверки: {{info.lasting }} </p>
+        <p>
+            Полное описание: {{info.descr}}
+        </p>
+    </article>
+	{% endfor %}
+    
+
+</article>
+
+</body>
+</html>

@@ -1,6 +1,6 @@
-#Получить содержимое файла:
-file_content = instance.get_file("/home/env.json")
-print("File content: ", file_content)
+#Прочитать файл:
+file_content = instance.get_file_through_exec("/home/env.json")
+
 
 #Обработать содержимое и выдать значение для статуса:
 if file_content != None:
@@ -12,5 +12,3 @@ else:
 
 #Добавить запись в таблицу scandata:
 data.add_control(int(script[0:3]), status, response, datetime_before)
-
-
