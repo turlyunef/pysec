@@ -16,13 +16,31 @@
 
 <article class="A4">
     <h1 class="main-title">
-        System summary
-    </h1>
-    <h1 class="main-title">
-        Compliance summary
+        Информация о целевой системе:
     </h1>
 	<h3>
-        Дата и время генерации отчета: {{date_time_report}}
+	<p> {{system_summary}} </p>
+	</h3>
+    <h1 class="main-title">
+        Информация о проверках:
+		
+    </h1>
+	<h3>
+        <p> Дата и время генерации отчета: {{date_time_report}}</p><br>
+		<p> Используемые транспорты: </p>
+		{% for transport in transport_info %}
+		<p> Имя транспорта: {{transport.name}}</p>
+		<p> Сетевые параметры для подключения: </p>
+        <p>  - Хост: {{transport.host}}</p>
+        <p>  - Порт: {{transport.port}}</p>
+        <p>  - Логин подключения: {{transport.login}}</p><br>
+		{% endfor %}
+		
+		<p> Общее количество проверок: {{sum_status}}</p>
+		{% for count in counter_data %}
+		<p> Проверок, завершившихся со статусом {{count.counter_key}}:  {{count.counter_value}}</p>
+		{% endfor %}
+		
     </h3>
 </article>
 
@@ -38,11 +56,11 @@
         
 		<h4>id:{{info.id_}}</h4>
 
-        <p> требование: {{info.request}} </p>
-        <p> система: {{info.response}} </p>
-        <p> status: <span class="not-compliant">{{info.status}} </span></p>
-		<p> время проверки: {{info.datetime_from_run }} </p>
-		<p> длительность проверки: {{info.lasting }} </p>
+        <p> Требование: {{info.request}} </p>
+        <p> Система: {{info.response}} </p>
+        <p> Статус проверки: <span class="not-compliant">{{info.status}} </span></p>
+		<p> Время проверки: {{info.datetime_from_run }} </p>
+		<p> Длительность проверки: {{info.lasting }} </p>
         <p>
             Полное описание: {{info.descr}}
         </p>

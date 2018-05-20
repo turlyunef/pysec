@@ -1,12 +1,8 @@
 import paramiko
-import json
-from scr.Exceptions import UnknownTransport, TransportError, AuthError, UnknownTransportError
-from scr.Exceptions import TransportConnectionError, UnknownStatus, AddControlError, ControlListError
-from scr.transports import get_env
+from scr.Exceptions import TransportError
 
-_env = None #Хранение параметров для подключения к целевому хосту по SSH
 
-# Класс тнаспрота SSH
+# Класс транспорта SSH
 class SSH:
     #Конструктор:
     def __init__(self, transport_name, host, port, login, password):
@@ -22,28 +18,29 @@ class SSH:
         self.client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         #Подключение к целевому хосту через SSH-сервер:
         self.connect(self.client)
-    
+
+        
   
     #Выполняет подключение к целевому хосту
     def connect(self, client_name):
         try:
-            print ("Попытка подключения к %s:%d" % (self.host, self.port))
+            print ("Попытка подключения к SSH-серверу через сокет %s: %d" % (self.host, self.port))
             client_name.connect(hostname = self.host, username = self.login, password = self.password, port = self.port)
         except paramiko.ssh_exception.AuthenticationException:
             print ("Ошибка аутентификации к целевому хосту \"%s\" через %s-соединение, проверьте логин и пароль" % (self.host, self.transport_name))
             
         except paramiko.ssh_exception.NoValidConnectionsError:
-            print ("Unable to connect to port %d on %s" % (self.port, self.host))
+            print ("Не удается подключиться к порту %d на хосте %s" % (self.port, self.host))
         except Exception as value:
-            print("Ошибка, подключение к \"%s\" не установлено" % (self.host, value))
+            print("Ошибка, подключение к SSH-серверу через хост \"%s\" не установлено" % (self.host, value))
         else:
-            print("Подключено к %s:%d" % (self.host, self.port))
+            print("Подключено к SSH-серверу через сокет %s: %d" % (self.host, self.port))
 
     #Выполняет комманду на целевом хосте
     def exec_(self, command):
         try:
             #Выполнить команду command:
-            print ("Попытка выполнения команды %s" % command)
+            print ("Выполнение на целевой системе команды: \"%s\"" % command)
             stdin, stdout, stderr = self.client.exec_command(command)
             #Записать результат в results:
             results = stdout.read()
@@ -55,7 +52,7 @@ class SSH:
                 raise TransportError(error)
         except TransportError as value:
             if error != b'':
-                print("Команда не выполнена по причине: ", value)
+                print("Команда не выполнена через SSH-соединение по причине: ", value)
                 return None
         except FileNotFoundError or IOError:
             raise TransportError(error)
@@ -103,37 +100,3 @@ class SSH:
             print("Ошибка: ", value)
         else:
             return file_content
-        
-
-
-#Возвращает при необходимости нужные параметры для подключения к целевой системе на основе _env
-def get_connection_settings(transport_name, host = None, port = None, login = None, password = None):
-    global _env
-    try:
-        if not _env:
-            _env = get_env() #Подгружаем _env из файла 'env.json'
-        if host == None: host = _env['host']
-        if port == None: port = _env['transports'][transport_name]['port']
-        if login == None: login = login = _env['transports'][transport_name]['login']
-        if password == None: password = _env['transports'][transport_name]['password']
-    except AuthError:
-        raise AuthError()
-    except KeyError:        
-        raise AuthError()
-    else:
-        return host, port, login, password
-
-#Возвращает instance транспорта SSH
-def get_transport(transport_name, host = None, port = None, login = None,
-                  password = None):
-    try:
-        #Взять host, port, login, password из файла 'env.json' в зависимости от их содержимого:
-        host, port, login, password = get_connection_settings(transport_name, host, port, login, password)
-    except UnknownTransport as value: #Выбрасывается, если нет транспорта, указанного в аргументе вызова функции get_transport
-        print("Транспорта ", value, " не существует")
-        return None
-    except AuthError: #Выбрасывается при неверной структуре файла env.json
-        print ("Невозможно извлечь параметры для подключения из файла 'env.json', нарушена структура файла")
-        return None
-    return SSH(transport_name, host, port, login, password)
-

@@ -13,4 +13,6 @@ else:
 #Добавить запись в таблицу scandata:
 data.add_control(int(script[0:3]), status, response, datetime_before)
 
+#Добавить отметку об использовании транспорта SSH в БД:
+data.add_values_to_DB('transports (transport)', "\'SSH\'")
 

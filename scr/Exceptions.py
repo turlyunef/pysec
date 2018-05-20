@@ -20,5 +20,11 @@ class UnknownStatus(Exception): pass
 # Класс исключения при ошибке добавления записи функцией add_control
 class AddControlError(Exception): pass
 
+# Класс исключения ошибок файла control.json
+class ControlError(Exception): pass
+
 # Класс исключения при остутвии файла control.json
-class ControlListError(Exception): pass
+class ControlListError(ControlError): pass
+
+# Класс исключения при отсутствии нужной записи в control.json
+class ControlDataError(ControlError): pass
