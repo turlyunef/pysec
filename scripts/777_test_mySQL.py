@@ -1,24 +1,31 @@
+from datetime import datetime
+datetime_before = datetime.now()
+
+import sys
+sys.path.append('../')
+import os
+from scr.MySQL import MySQL
+from scr.DB import DB, add_control
+from scr.transports import get_transport
+
+
+#Создать транспорт MySQL:
+instance = get_transport("MySQL")
+
+
 #Выполнить команды:
 
-try:
-    instance2.sqlexec('''CREATE TABLE `users` (
-        `id` int(11) NOT NULL AUTO_INCREMENT,
-        `email` varchar(255) COLLATE utf8_bin NOT NULL,
-        `password` varchar(255) COLLATE utf8_bin NOT NULL,
-        PRIMARY KEY (`id`)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin
-            AUTO_INCREMENT=1 ;''')
-except Exception as value:
-    print("Ошибка создания таблицы users в БД: ", value)
-    
-try:    
-    instance2.sqlexec("INSERT INTO `users` (`email`, `password`) VALUES ('webmaster@python.org', 'very-secret')")
-except Exception as value:
-    print("Ошибка добавления записи в таблицу users в БД", value)
-try:
-    file_content = instance2.sqlexec("SELECT `id`, `password` FROM `users` WHERE `email`='webmaster@python.org'")
-except Exception as value:
-    print("Ошибка чтения записи в таблице users в БД", value)
+instance.sqlexec('''CREATE TABLE `users` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `email` varchar(255) COLLATE utf8_bin NOT NULL,
+    `password` varchar(255) COLLATE utf8_bin NOT NULL,
+    PRIMARY KEY (`id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin
+        AUTO_INCREMENT=1 ;''')
+
+instance.sqlexec("INSERT INTO `users` (`email`, `password`) VALUES ('webmaster@python.org', 'very-secret')")
+
+file_content = instance.sqlexec("SELECT `id`, `password` FROM `users` WHERE `email`='webmaster@python.org'")
 
 #Обработать содержимое и выдать значение для статуса:
 if file_content != None:
@@ -29,7 +36,7 @@ else:
     response = "Команда не выполнена"
 
 #Добавить запись в таблицу scandata:
-data.add_control(int(script[0:3]), status, response, datetime_before)
+name_module = os.path.basename(__file__)
+id_ = (name_module.split("_"))[0]
+add_control(int(id_), status, response, datetime_before)
 
-#Добавить отметку об использовании транспорта MySQL в БД:
-data.add_values_to_DB('transports (transport)', "\'MySQL\'")

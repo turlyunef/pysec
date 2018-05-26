@@ -41,6 +41,8 @@ class SSH:
         try:
             #Выполнить команду command:
             print ("Выполнение на целевой системе команды: \"%s\"" % command)
+            if self.client == None:
+                raise TransportError(error)
             stdin, stdout, stderr = self.client.exec_command(command)
             #Записать результат в results:
             results = stdout.read()
@@ -50,15 +52,14 @@ class SSH:
             else:
                 error = stderr.read()
                 raise TransportError(error)
-        except TransportError as value:
-            if error != b'':
-                print("Команда не выполнена через SSH-соединение по причине: ", value)
-                return None
         except FileNotFoundError or IOError:
             raise TransportError(error)
             return None
+
+    #Закрыть клиент
     def close(self):
         self.client.close()
+
     #Возвращает содержимое файла
     #Способ 1 (через SFTP)
     def get_file(self, path): 
@@ -77,6 +78,7 @@ class SSH:
         except Exception as value:
             print("Ошибка: ", value)
         else:
+            print("Содержимое файла: ", file_content)
             return file_content
 
 
@@ -88,8 +90,7 @@ class SSH:
             path = path.rstrip()
             path = path.lstrip()
             #Извлечь имя файла и папки в указанном пути:
-            file_name = path.split('/')[-1]
-            folder = path[0:-len(file_name)]
+            file_name,folder = path.rsplit('/', 1)
 
             #Передать команду целевому хосту на чтение файла:
             file_content = self.exec_('cat %s' % path)
@@ -99,4 +100,5 @@ class SSH:
         except Exception as value:
             print("Ошибка: ", value)
         else:
+            print("Содержимое файла: ", file_content)
             return file_content

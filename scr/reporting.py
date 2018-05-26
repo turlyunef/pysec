@@ -2,11 +2,20 @@ from jinja2 import Template, Environment, PackageLoader, FileSystemLoader, selec
 from collections import Counter
 from datetime import datetime
 from collections import namedtuple
-from scr.transports import get_transport_settings
-from scr.Exceptions import ControlDataError
+from scr.transports import get_transport_settings, get_transport
+from scr.Exceptions import ControlDataError, TransportError
+from scr.DB import get_data_from_table, get_transport_info_list
+ 
+#Создать отчет сканирования, на входе таблица "scandata", "control" и база данных data_base
+def print_report():
 
-def print_report(scandata, control, instance, data_base):
+    #Подгрузка содержимого таблиц из базы данных
+    scandata = get_data_from_table("scandata")
+    control = get_data_from_table("control")
+
     print("\nГенерация отчета сканирования")
+
+    #Переменная окружения для модуля создания pdf-отчета
     env = Environment(
         loader=FileSystemLoader('templates'),
         autoescape=select_autoescape(['html', 'xml'])
@@ -14,6 +23,7 @@ def print_report(scandata, control, instance, data_base):
 
     #Счетчик проверок:
     counter = Counter()
+
     #Пустые листы для создания namedtuple для дальнейшего рендеринга шаблона index.html:
     id_list = []
     status_list = []
@@ -37,6 +47,7 @@ def print_report(scandata, control, instance, data_base):
         lasting_list.append(lasting)
         
         counter[status] +=1
+
     #Общее количество проверок:
     sum_status = sum(counter.values()) 
 
@@ -57,39 +68,35 @@ def print_report(scandata, control, instance, data_base):
     #Вывод количества проверок
     print  ("Общее количество проверок: ", sum_status)
 
-    
-
-
+    #namedtuple для рендеринга html (данные по результатам работы со scandata)
     Data = namedtuple('scandata','id_,status,response,datetime_from_run,lasting,descr,request,descr_short')
     data = [Data(id_, status, response, datetime_from_run, lasting, descr, request, descr_short) \
             for id_,status,response,datetime_from_run,lasting,descr,request,descr_short in zip(id_list, status_list, response_list,datetime_from_run_list,\
                                                                      lasting_list,descr_list, request_list, descr_short_list)]
+
+    # Проверка, совпадает ли количество проверок со сгенерированным namedtuple Data
+    # Может не совпадать, если в файле control.json нет всех описаний проверок для используемых в папке scripts
     if len(data)!=sum_status:
         raise ControlDataError()
-
+      
+    #namedtuple для рендеринга html (данные по результатам работы со счетчиком проверок)
     Counter_data = namedtuple('counter_data','counter_key,counter_value')
     counter_data = [Counter_data(counter_key,counter_value) for counter_key,counter_value in zip(counter_key_list,counter_value_list)]
+
+    system_summary = "Не получена" #хранение информации о целевой системе для внесения в отчет
+    try:
+        #Создать или подгрузить транспорт SSH:
+        instance_SSH = get_transport("SSH")
+
+        #Получение информации о целевой системе для внесения в отчет:
+        system_summary = str(instance_SSH.exec_("cat /etc/lsb-release"), encoding='utf8')
+    except TransportError as value:
+        print("Ошибка транспорта. Получение информации о целевой системе для внесения в отчет не выполнено по причине: ", value)
+    except AttributeError as value:
+        print("Ошибка транспорта. Получение информации о целевой системе для внесения в отчет не выполнено по причине: ", value)
+    #Получение информации об используемых транспортах из БД, таблицы transport:
+    transport_info_list = get_transport_info_list()
     
-
-    #Получение информации о целевой системе:
-    system_summary = str(instance.exec_("cat /etc/lsb-release"), encoding='utf8')
-
-    #Получение информации об используемых транспортах:
-    transport_info_list = []
-    transport_list = []
-    class Transport_info:
-        pass
-    data_base.db_cursor.execute("SELECT * FROM transports")
-    for value in data_base.db_cursor:
-        if value[1] not in transport_list:
-            transport_list.append(value[1])
-            transport_info = Transport_info()
-            transport_info.name = value[1]
-            transport_info.host, transport_info.port , transport_info.login = \
-                                 get_transport_settings(value[1])
-            transport_info_list.append(transport_info)
-
-
     #Рендеринг html
 
     try:

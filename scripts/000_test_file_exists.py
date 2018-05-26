@@ -1,6 +1,17 @@
+from datetime import datetime
+datetime_before = datetime.now()
+import sys
+sys.path.append('../')
+import os
+from scr.SSH import SSH
+from scr.DB import DB, add_control
+from scr.transports import get_transport
+
+#Создать или подгрузить транспорт SSH:
+instance_SSH = get_transport("SSH")
+
 #Получить содержимое файла:
-file_content = instance.get_file("/home/env.json")
-print("File content: ", file_content)
+file_content = instance_SSH.get_file("/home/env.json")
 
 #Обработать содержимое и выдать значение для статуса:
 if file_content != None:
@@ -11,8 +22,8 @@ else:
     response = "Файл отсутствует"
 
 #Добавить запись в таблицу scandata:
-data.add_control(int(script[0:3]), status, response, datetime_before)
+name_module = os.path.basename(__file__)
+id_ = (name_module.split("_"))[0]
+add_control(int(id_), status, response, datetime_before)
 
-#Добавить отметку об использовании транспорта SSH в БД:
-data.add_values_to_DB('transports (transport)', "\'SSH\'")
 
